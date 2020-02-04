@@ -27,9 +27,10 @@ export default async (req, res) => {
   );
   const data = JSON.parse(viewFilteredGeohashAggregation)[
     "geohash_grid#location-4"
-  ].buckets.reduce(
-    (acc, { key, doc_count }) => ({ ...acc, [key]: doc_count }),
-    {}
-  );
+  ].buckets;
+  //.reduce(
+  //   (acc, { key, doc_count }) => ({ ...acc, [key]: doc_count }),
+  //   {}
+  // )
   res.end(JSON.stringify(data));
 };

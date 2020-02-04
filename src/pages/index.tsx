@@ -19,7 +19,7 @@ export default function index() {
   });
 
   useEffect(() => {
-    getData().then(setData);
+    getData();
   }, []);
 
   const layer = new HexagonLayer({
@@ -48,6 +48,8 @@ export default function index() {
   });
 
   return (
+    <>
+      {/*
     <DeckGL
       layers={[layer]}
       ref={deckRef}
@@ -74,6 +76,7 @@ export default function index() {
           mapStyle="mapbox://styles/qonytegetnadacom/ck5xy6ccd02t41ip7tbaha5uc"
         />
       )}
-    </DeckGL>
+        </DeckGL>*/}
+    </>
   );
 }
