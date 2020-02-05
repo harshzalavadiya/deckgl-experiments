@@ -4,9 +4,9 @@ export default async (req, res) => {
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/json");
   const {
-    data: { viewFilteredGeohashAggregation }
+    data: { geohashAggregation }
   } = await axios.get(
-    "https://venus.strandls.com/biodiv-api/naksha/search/observation/observation",
+    "https://pamba.strandls.com/biodiv-api/naksha/search/observation/observation",
     {
       params: {
         count: 0,
@@ -25,12 +25,11 @@ export default async (req, res) => {
       }
     }
   );
-  const data = JSON.parse(viewFilteredGeohashAggregation)[
+  const data = JSON.parse(geohashAggregation)[
     "geohash_grid#location-4"
-  ].buckets;
-  //.reduce(
-  //   (acc, { key, doc_count }) => ({ ...acc, [key]: doc_count }),
-  //   {}
-  // )
+  ].buckets.reduce(
+    (acc, { key, doc_count }) => ({ ...acc, [key]: doc_count }),
+    {}
+  );
   res.end(JSON.stringify(data));
 };

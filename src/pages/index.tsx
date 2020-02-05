@@ -1,46 +1,76 @@
-import { HexagonLayer } from "@deck.gl/aggregation-layers";
+import { GeoJsonLayer } from "@deck.gl/layers";
 import { MapboxLayer } from "@deck.gl/mapbox";
 import DeckGL from "@deck.gl/react";
 import React, { useEffect, useRef, useState } from "react";
 import { StaticMap } from "react-map-gl";
-
+import colorbrewer from "colorbrewer";
 import { getData } from "../utils/basic";
+import { scaleThreshold } from "d3-scale";
+import hextorgb from "hex-to-rgb";
+
+const PALLETE_COUNT = 6;
 
 export default function index() {
   const deckRef = useRef(null);
   const [gl, setGl] = useState();
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any>({
+    pallete: () => null,
+    geojson: {
+      type: "FeatureCollection",
+      features: []
+    }
+  });
   const [viewState, setViewState] = useState({
     latitude: 24,
     longitude: 78.4,
-    zoom: 4
-    // pitch: 40,
-    // bearing: 0
+    zoom: 4,
+    pitch: 40,
+    bearing: 0
   });
 
   useEffect(() => {
-    getData();
+    getData().then(({ min, max, newBins, geojson }) => {
+      const d = (max - min) / PALLETE_COUNT;
+      const domain = new Array(PALLETE_COUNT - 1).fill(0).map((_, index) => {
+        return min + d * (index + 1);
+      });
+      console.log(domain);
+      console.log(colorbrewer.YlOrRd[PALLETE_COUNT]);
+      setData({
+        pallete: scaleThreshold()
+          .domain(newBins)
+          .range(colorbrewer.YlOrRd[PALLETE_COUNT]),
+        geojson
+      });
+    });
   }, []);
 
-  const layer = new HexagonLayer({
-    id: "screen-grid-layer",
-    data,
+  const layer = new GeoJsonLayer({
+    id: "geojson-layer",
+    data: data.geojson,
     pickable: true,
-    extruded: false,
-    opacity: 0.8,
-    radius: 10000,
-    colorRange: [
-      [0, 25, 0, 25],
-      [0, 85, 0, 85],
-      [0, 127, 0, 127],
-      [0, 170, 0, 170],
-      [0, 190, 0, 190],
-      [0, 255, 0, 255]
-    ],
-    getPosition: d => d.centroid,
-    getWeight: d => d.count
+    stroked: true,
+    filled: true,
+    extruded: true,
+    // lineWidthScale: 20,
+    lineWidthMinPixels: 1,
+    elevationScale: 20,
+    getFillColor: d => {
+      const col = data.pallete
+        ? [...hextorgb(data.pallete(d.properties.count)), 220]
+        : [255, 0, 0];
+      // console.log(col);
+      return col;
+    },
+    getLineColor: [255, 255, 255],
+
+    getElevation: d => d.properties.count
+    // getLineColor: d => [0, 0, 0],
+    // getRadius: 100,
+    // getLineWidth: 1,
+    // getElevation: 300
     // onHover: ({ object, x, y }) => {
-    //   const tooltip = `height: ${object.value * 5000}m`;
+    //   const tooltip = object.properties.name || object.properties.station;
     //   /* Update tooltip
     //      http://deck.gl/#/documentation/developer-guide/adding-interactivity?section=example-display-a-tooltip-for-hovered-object
     //   */
@@ -49,34 +79,33 @@ export default function index() {
 
   return (
     <>
-      {/*
-    <DeckGL
-      layers={[layer]}
-      ref={deckRef}
-      controller={true}
-      viewState={viewState}
-      onViewStateChange={({ viewState }) => setViewState(viewState)}
-      onWebGLInitialized={gl => setGl(gl)}
-      //   onAfterRender={() => {
-      //     console.log("AfterRender");
-      //   }}
-    >
-      {gl && (
-        <StaticMap
-          gl={gl}
-          onLoad={e => {
-            e.target.addLayer(
-              new MapboxLayer({
-                id: "column-layer",
-                deck: deckRef.current.deck
-              })
-            );
-          }}
-          mapboxApiAccessToken="pk.eyJ1IjoicW9ueXRlZ2V0bmFkYWNvbSIsImEiOiJjazV4eTJ5aHgyYXk1M2xubmlqYnl2bTQwIn0.2fhCIQBveWAqzPTlUJxvlg"
-          mapStyle="mapbox://styles/qonytegetnadacom/ck5xy6ccd02t41ip7tbaha5uc"
-        />
-      )}
-        </DeckGL>*/}
+      <DeckGL
+        layers={[layer]}
+        ref={deckRef}
+        controller={true}
+        viewState={viewState}
+        onViewStateChange={({ viewState }) => setViewState(viewState)}
+        onWebGLInitialized={gl => setGl(gl)}
+        //   onAfterRender={() => {
+        //     console.log("AfterRender");
+        //   }}
+      >
+        {gl && (
+          <StaticMap
+            gl={gl}
+            onLoad={e => {
+              e.target.addLayer(
+                new MapboxLayer({
+                  id: "geojson-layer",
+                  deck: deckRef.current.deck
+                })
+              );
+            }}
+            mapboxApiAccessToken="pk.eyJ1IjoicW9ueXRlZ2V0bmFkYWNvbSIsImEiOiJjazV4eTJ5aHgyYXk1M2xubmlqYnl2bTQwIn0.2fhCIQBveWAqzPTlUJxvlg"
+            mapStyle="mapbox://styles/qonytegetnadacom/ck5xy6ccd02t41ip7tbaha5uc"
+          />
+        )}
+      </DeckGL>
     </>
   );
 }
