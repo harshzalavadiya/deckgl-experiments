@@ -7,12 +7,15 @@ import colorbrewer from "colorbrewer";
 import { getData } from "../utils/basic";
 import { scaleThreshold } from "d3-scale";
 import hextorgb from "hex-to-rgb";
+import { HexagonLayer } from "@deck.gl/aggregation-layers";
 
 const PALLETE_COUNT = 6;
 
 export default function index() {
   const deckRef = useRef(null);
   const [gl, setGl] = useState();
+  const [hashedData, setHashedData] = useState<any>([]);
+  const [colorDomain, setColorDomain] = useState<any>([]);
   const [data, setData] = useState<any>({
     pallete: () => null,
     geojson: {
@@ -24,18 +27,14 @@ export default function index() {
     latitude: 24,
     longitude: 78.4,
     zoom: 4,
-    pitch: 40,
-    bearing: 0
+    // pitch: 40,
+    // bearing: 0
   });
 
   useEffect(() => {
-    getData().then(({ min, max, newBins, geojson }) => {
-      const d = (max - min) / PALLETE_COUNT;
-      const domain = new Array(PALLETE_COUNT - 1).fill(0).map((_, index) => {
-        return min + d * (index + 1);
-      });
-      console.log(domain);
-      console.log(colorbrewer.YlOrRd[PALLETE_COUNT]);
+    getData().then(({ data, newBins, geojson }) => {
+      setHashedData(data);
+      setColorDomain(newBins);
       setData({
         pallete: scaleThreshold()
           .domain(newBins)
@@ -51,18 +50,18 @@ export default function index() {
     pickable: true,
     stroked: true,
     filled: true,
-    extruded: true,
+    extruded: false,
     // lineWidthScale: 20,
     lineWidthMinPixels: 1,
     elevationScale: 20,
     getFillColor: d => {
       const col = data.pallete
-        ? [...hextorgb(data.pallete(d.properties.count)), 220]
+        ? [...hextorgb(data.pallete(d.properties.count)), 210]
         : [255, 0, 0];
       // console.log(col);
       return col;
     },
-    getLineColor: [255, 255, 255],
+    getLineColor: [0, 0, 0, 10],
 
     getElevation: d => d.properties.count
     // getLineColor: d => [0, 0, 0],
@@ -77,10 +76,25 @@ export default function index() {
     // }
   });
 
+  const layer1 = new HexagonLayer({
+    id: "geojson-layer",
+    data: hashedData,
+    pickable: true,
+    extruded: false,
+    radius: 10000,
+    elevationScale: 50,
+    coverage: 0.9,
+    // elevationScale: 4,
+    colorDomain,
+    getPosition: d => d.coordinates,
+    getColorWeight: d => d.count,
+    upperPersentile: 80
+  });
+
   return (
     <>
       <DeckGL
-        layers={[layer]}
+        layers={[layer1]}
         ref={deckRef}
         controller={true}
         viewState={viewState}

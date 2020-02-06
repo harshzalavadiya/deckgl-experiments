@@ -17,6 +17,7 @@
     "@turf/explode": "^5.1.5",
     "@turf/helpers": "^6.1.4",
     "@turf/square": "^5.1.5",
+    "@turf/turf": "^5.1.6",
     "@types/colorbrewer": "^1.0.29",
     "axios": "^0.19.2",
     "boundingbox": "^1.2.1",
