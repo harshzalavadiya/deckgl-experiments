@@ -27,7 +27,7 @@
     "geohash": "^0.0.1",
     "hex-to-rgb": "^1.0.1",
     "latlon-geohash": "^2.0.0",
-    "next": "^9.2.1",
+    "next": "^9.3.2",
     "ngeohash": "^0.6.3",
     "rainbowvis.js": "^1.0.1",
     "react": "^16.12.0",
